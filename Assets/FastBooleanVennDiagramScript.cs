@@ -133,14 +133,15 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
         QuickLog("The expression displayed is \"{0}\".", disp);
         for (int i = 0; i < 16; i++)
         {
-            bool[] a = new bool[4] { i % 2 > 0, (i / 2) % 2 > 0, (i / 4) % 2 > 0, i > 7 };
+            bool[] a = new bool[4] { (i & 1) == 1, (i >> 1 & 1) == 1, (i >> 2 & 1) == 1, i > 7 };
             switch (order)
             {
+                default:
                 case 0: truth[0][i] = Op(Op(Op(a[sets[0]], a[sets[1]], ops[0]), a[sets[2]], ops[1]), a[sets[3]], ops[2]); break;
                 case 1: truth[0][i] = Op(Op(a[sets[0]], Op(a[sets[1]], a[sets[2]], ops[1]), ops[0]), a[sets[3]], ops[2]); break;
-                case 2: truth[0][i] = Op(a[sets[0]], Op(Op(a[sets[1]], a[sets[2]], ops[1]), a[sets[3]], ops[1]), ops[0]); break;
+                case 2: truth[0][i] = Op(a[sets[0]], Op(Op(a[sets[1]], a[sets[2]], ops[1]), a[sets[3]], ops[2]), ops[0]); break;
                 case 3: truth[0][i] = Op(a[sets[0]], Op(a[sets[1]], Op(a[sets[2]], a[sets[3]], ops[2]), ops[1]), ops[0]); break;
-                default: truth[0][i] = Op(Op(a[sets[0]], a[sets[1]], ops[0]), Op(a[sets[2]], a[sets[3]], ops[2]), ops[1]); break;
+                case 4: truth[0][i] = Op(Op(a[sets[0]], a[sets[1]], ops[0]), Op(a[sets[2]], a[sets[3]], ops[2]), ops[1]); break;
             }
         }
         QuickLog("I expect the following sections to be pressed: {0}.", string.Join(", ", venn.Where((x, i) => truth[0][i]).ToArray()));
