@@ -16,12 +16,14 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
 
     private string[] venn = new string[16] { "O", "A", "B", "AB", "C", "AC", "BC", "ABC", "D", "AD", "BD", "ABD", "CD", "ACD", "BCD", "ABCD"};
     private bool[][] truth = new bool[2][] { new bool[16], new bool[16]};
-    private int[] sets = new int[4] { 0, 1, 2, 3};
-    private int[] ops = new int[3];
+    private int[] sets = new int[] { 0, 1, 2, 3 };
+    private int[] ops;
     private int order;
     private bool pressable, timerRunning, accelerateTimer = false;
 
     const float timeAllowed = 30f;
+    const string sectors = "ABCD";
+    const string operators = "ʌV▵|↧≡↦↤";
 
     private static int moduleIDCounter;
     private int moduleID;
@@ -42,17 +44,19 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
             button.OnInteract = delegate ()
             {
                 if (!moduleSolved)
-                if (pressable)
-                {
-                    button.AddInteractionPunch(0.1f);
-                    truth[1][b] ^= true;
-                    brends[b].material = mats[truth[1][b] ? 1 : 0];
-                    StartCoroutine(Sound(b > 7, (b / 4) % 2 > 0, (b / 2) % 2 > 0, b % 2 > 0));
-                }
-                else if (!timerRunning)
-                {
-                    StartCoroutine(ActivateTimer());
-                }
+                    if (pressable)
+                    {
+                        button.AddInteractionPunch(0.1f);
+                        truth[1][b] ^= true;
+                        brends[b].material = mats[truth[1][b] ? 1 : 0];
+                        StartCoroutine(Sound(b > 7, (b / 4) % 2 > 0, (b / 2) % 2 > 0, b % 2 > 0));
+                    }
+                    else if (!timerRunning)
+                    {
+                        button.AddInteractionPunch(0.1f);
+                        StartCoroutine(ActivateTimer());
+                        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, button.transform);
+                    }
                 return false;
             };
         }
@@ -61,11 +65,17 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
             brends[i].material = mats[0];
             truth[1][i] = false;
         }
+        QuickLog("Press any section to activate the module.");
     }
 
     private IEnumerator Sound(bool a, bool b, bool c, bool d)
     {
         int i = new bool[4] { a, b, c, d }.Count(x => x);
+        if (i == 0)
+        {
+            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, transform);
+            yield break;
+        }
         if (a)
         {
             Audio.PlaySoundAtTransform("tock", transform);
@@ -81,7 +91,7 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
             Audio.PlaySoundAtTransform("teck", transform);
             yield return new WaitForSeconds(0.2f / i);
         }
-        if(d)
+        if (d)
             Audio.PlaySoundAtTransform("tick", transform);
     }
 
@@ -113,9 +123,11 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
             brends[i].material = mats[0];
             truth[1][i] = false;
         }
-        sets = sets.Shuffle();
+        sets.Shuffle();
         ops = new int[3] { Random.Range(0, 8), Random.Range(0, 8), Random.Range(0, 8) };
-        disp = "ABCD"[sets[0]].ToString() + "ʌV▵|↧≡↦↤"[ops[0]].ToString() + "ABCD"[sets[1]].ToString() + "ʌV▵|↧≡↦↤"[ops[1]].ToString() + "ABCD"[sets[2]].ToString() + "ʌV▵|↧≡↦↤"[ops[2]].ToString() + "ABCD"[sets[3]].ToString(); ;
+        disp = string.Format("{0}{1}{2}{3}{4}{5}{6}",
+                        sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                        operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]);
         order = Random.Range(0, 5);
         // 1 2 3 4
         // 1 (2 3) 4
@@ -124,13 +136,52 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
         // 1 2 (3 4)
         switch (order)
         {
-            case 1: disp = disp.Insert(5, ")").Insert(2, "("); break;
-            case 2: disp = disp.Insert(2, "(") + ")"; break;
-            case 3: disp = disp.Insert(4, "(").Insert(2, "(") + "))"; break;
-            case 4: disp = disp.Insert(4, "(") + ")"; break;
+            case 1: disp = string.Format("{0}{1}({2}{3}{4}){5}{6}",
+                sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]); break;
+            case 2:
+                disp = string.Format("{0}{1}({2}{3}{4}{5}{6})",
+            sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+            operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]); break;
+            case 3:
+                disp = string.Format("{0}{1}({2}{3}({4}{5}{6}))",
+            sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+            operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]); break;
+            case 4:
+                disp = string.Format("{0}{1}{2}{3}({4}{5}{6})",
+                sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]); break;
         }
         display.text = disp;
         QuickLog("The expression displayed is \"{0}\".", disp);
+        var loggingOperations = string.Format("(({0}{1}{2}){3}{4}){5}{6}",
+                        sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                        operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]);
+        switch (order)
+        {
+            case 1:
+                loggingOperations = string.Format("({0}{1}({2}{3}{4})){5}{6}",
+                        sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                        operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]);
+                break;
+            case 2:
+                loggingOperations = string.Format("{0}{1}(({2}{3}{4}){5}{6})",
+                        sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                        operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]);
+                break;
+            case 3:
+                loggingOperations = string.Format("{0}{1}({2}{3}({4}{5}{6}))",
+                        sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                        operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]);
+                break;
+            case 4:
+                loggingOperations = string.Format("({0}{1}{2}){3}({4}{5}{6})",
+                        sectors[sets[0]], operators[ops[0]], sectors[sets[1]],
+                        operators[ops[1]], sectors[sets[2]], operators[ops[2]], sectors[sets[3]]);
+                break;
+
+        }
+        QuickLog("The expression if left-to-right rules were visualized is \"{0}\".", loggingOperations);
         for (int i = 0; i < 16; i++)
         {
             bool[] a = new bool[4] { (i & 1) == 1, (i >> 1 & 1) == 1, (i >> 2 & 1) == 1, i > 7 };
@@ -177,6 +228,7 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
                 yield return null;
             }
             timerend.material.color = Color.green;
+            timer.localScale = new Vector3(0.19f, 1, 0.15f);
             timerRunning = false;
             for (int i = 0; i < 16; i++)
             {
@@ -187,18 +239,30 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
         }
     }
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} O/<ABCD> [Selects segment. Chain with spaces.]";
+    private readonly string TwitchHelpMessage = @"!{0} activate [Activates the module.] | !{0} O/<ABCD> [Selects a section corresponding to A, B, C, D; order does not matter. Multiple sections can be chained with spaces.]";
 #pragma warning restore 414
 
     private IEnumerator ProcessTwitchCommand(string command)
     {
         string[] commands = command.ToUpperInvariant().Split(' ');
-        List<int> s = new List<int> { };
+        if (command.Trim().EqualsIgnoreCase("activate"))
+        {
+            if (timerRunning)
+            {
+                yield return "sendtochaterror The timer is already active! Get your sections in before time runs out!";
+                yield break;
+            }
+            yield return null;
+            buttons.PickRandom().OnInteract();
+            yield return "strike";
+            yield break;
+        }
+        List<int> s = new List<int>();
         for(int i = 0; i < commands.Length; i++)
         {
             if (commands[i].Length < 1)
                 continue;
-            if(commands[i].All(x => "OABCD".Contains(x.ToString())))
+            if (commands[i].All(x => "OABCD".Contains(x.ToString())))
             {
                 if (commands[i].Contains("O"))
                 {
@@ -206,16 +270,16 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
                         s.Add(0);
                     else
                     {
-                        yield return "sendtochaterror!f \"" + commands[i] + "\" is not a valid segment.";
-                        continue;
+                        yield return "sendtochaterror \"" + commands[i] + "\" is not a valid segment.";
+                        yield break;
                     }
                 }
                 else
                 {
-                    if(commands[i].GroupBy(x => x).Any(x => x.Count() > 1))
+                    if (commands[i].GroupBy(x => x).Any(x => x.Count() > 1))
                     {
-                        yield return "sendtochaterror!f \"" + commands[i] + "\" is not a valid segment. Segments must not contain duplicate characters.";
-                        continue;
+                        yield return "sendtochaterror \"" + commands[i] + "\" is not a valid segment. Segments must not contain duplicate characters.";
+                        yield break;
                     }
                     int d = 0;
                     if (commands[i].Contains("D"))
@@ -228,19 +292,32 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
                         d += 1;
                     if (s.Contains(d))
                     {
-                        yield return "sendtochat!f \"" + commands[i] + "\" appears more than once in the command.";
-                        continue;
+                        yield return "sendtochaterror \"" + commands[i] + "\" appears more than once in the command.";
+                        yield break;
                     }
                     s.Add(d);
                 }
             }
             else
-                yield return "sendtochaterror!f \"" + commands[i] + "\" is not a valid segment.";
+            {
+                yield return "sendtochaterror \"" + commands[i] + "\" is not a valid segment.";
+                yield break;
+            }
         }
-        for(int i = 0; i < s.Count(); i++)
+        if (s.Any())
         {
-            yield return new WaitForSeconds(0.1f);
-            buttons[s[i]].OnInteract();
+            if (!timerRunning)
+            {
+                yield return "sendtochaterror The timer is not active! Use \"!{1} activate\" to initiate the module.";
+                yield break;
+            }
+            yield return null;
+            for (int i = 0; i < s.Count(); i++)
+            {
+                buttons[s[i]].OnInteract();
+                yield return new WaitForSeconds(0.1f);
+            }
+            yield return truth[0].SequenceEqual(truth[1]) ? "solve" : "strike";
         }
     }
 

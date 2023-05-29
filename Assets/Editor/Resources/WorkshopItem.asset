@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Name: WorkshopItem
   m_EditorClassIdentifier: 
   WorkshopPublishedFileID: 0
-  Title: Ill Logic
-  Tags: []
+  Title: Fast Boolean Venn Diagram
+  Tags:
+  - Regular Module

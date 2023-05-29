@@ -11,14 +11,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 615501dbe4f3fe94fbf4b564abb10237, type: 3}
   m_Name: ModConfig
   m_EditorClassIdentifier: 
-  id: illLogic
-  title: Ill Logic
-  author: Speakingevil
-  description: 'Spock quote.
+  id: FBVDMod
+  title: Fast Boolean Venn Diagram
+  author: VFlyer, Speakingevil
+  description: '[i]Sometimes, I wonder if I do logic too fast...[/i]
 
 
-    Determine the true meanings of each character in a series of scrambled logical
-    statements and predict the output of the next statement.'
+    Determine a series of sectors that return true to the expression displayed within
+    a time limit.
+
+    Based off of Speakingevil''s Ill Logic'
   version: 1.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: e1c4ced8cf4c4304595e2c84b196f0e1, type: 3}
