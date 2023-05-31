@@ -93,7 +93,7 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
             brends[i].material = mats[0];
             truth[1][i] = false;
         }
-        QuickLog("Press any section to activate the module.");
+        QuickLog("Press any sector to activate the module.");
     }
 
     private IEnumerator Sound(bool a, bool b, bool c, bool d)
