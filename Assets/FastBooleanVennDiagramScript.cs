@@ -63,8 +63,8 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
 
 	private void Start()
     {
-        QuickLogDebug("Max time for TP: {0}; Max time otherwise: {1}", timeAllowedTP, timeAllowedNormal);
         moduleID = ++moduleIDCounter;
+        QuickLogDebug("Max time for TP: {0}; Max time otherwise: {1}", timeAllowedTP, timeAllowedNormal);
         for (int i = 0; i < buttons.Count; i++)
         {
             KMSelectable button = buttons[i];
