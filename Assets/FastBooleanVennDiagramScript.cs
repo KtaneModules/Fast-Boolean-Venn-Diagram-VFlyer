@@ -21,21 +21,49 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
     private int order;
     private bool pressable, timerRunning, accelerateTimer = false;
 
-    const float timeAllowed = 30f;
+    float timeAllowedNormal = 30f, timeAllowedTP = 60f;
     const string sectors = "ABCD";
     const string operators = "ʌV▵|↧≡↦↤";
 
     private static int moduleIDCounter;
     private int moduleID;
     private bool moduleSolved;
+    FBVDSettings storedSettings = new FBVDSettings();
 
+    void QuickLogDebug(string toLog, params object[] args)
+    {
+        Debug.LogFormat("<Fast Boolean Venn Diagram #{0}> {1}", moduleID, string.Format(toLog, args));
+    }
     void QuickLog(string toLog, params object[] args)
     {
         Debug.LogFormat("[Fast Boolean Venn Diagram #{0}] {1}", moduleID, string.Format(toLog, args));
     }
+    public class FBVDSettings
+    {
+        public float startTimeNonTP = 30f;
+        public float startTimeTP = 60f;
+    }
+    private void Awake()
+    {
+        try
+        {
+            var FBVDCurSettings = new ModConfig<FBVDSettings>("FastBooleanVennDiagram");
+            storedSettings = FBVDCurSettings.Settings;
+            FBVDCurSettings.Settings = storedSettings;
+            timeAllowedNormal = storedSettings.startTimeNonTP;
+            timeAllowedTP = storedSettings.startTimeTP;
+        }
+        catch
+        {
+            Debug.LogWarning("<Fast Boolean Venn Diagram Settings> Settings do not work as intended! Using default settings!");
+            timeAllowedNormal = 30f;
+            timeAllowedTP = 60f;
+        }
+    }
 
 	private void Start()
     {
+        QuickLogDebug("Max time for TP: {0}; Max time otherwise: {1}", timeAllowedTP, timeAllowedNormal);
         moduleID = ++moduleIDCounter;
         for (int i = 0; i < buttons.Count; i++)
         {
@@ -196,13 +224,14 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
             }
         }
         QuickLog("I expect the following sections to be pressed: {0}.", string.Join(", ", venn.Where((x, i) => truth[0][i]).ToArray()));
-        e = timeAllowed;
+        var curMaxTime = TwitchPlaysActive ? timeAllowedTP : timeAllowedNormal;
+        e = curMaxTime;
         while (e > 0)
         {
             e -= Time.deltaTime * (accelerateTimer ? 10f : 1f);
-            timerend.material.color = new Color(Mathf.Min(1, (timeAllowed - e) / (timeAllowed / 2)), Mathf.Max(0, e / (timeAllowed / 2)), 0);
-            timer.localPosition = new Vector3(Mathf.Lerp(0.95f, 0, e / timeAllowed), 0, 0.1f);
-            timer.localScale = new Vector3(Mathf.Lerp(0, 0.19f, e / timeAllowed), 1, 0.15f);
+            timerend.material.color = new Color(Mathf.Min(1, (curMaxTime - e) / (curMaxTime / 2)), Mathf.Max(0, e / (curMaxTime / 2)), 0);
+            timer.localPosition = new Vector3(Mathf.Lerp(0.95f, 0, e / curMaxTime), 0, 0.1f);
+            timer.localScale = new Vector3(Mathf.Lerp(0, 0.19f, e / curMaxTime), 1, 0.15f);
             yield return null;
         }
         for (int i = 0; i < 16; i++)
@@ -239,6 +268,7 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
         }
     }
 #pragma warning disable 414
+    private bool TwitchPlaysActive;
     private readonly string TwitchHelpMessage = @"!{0} activate [Activates the module.] | !{0} O/<ABCD> [Selects a section corresponding to A, B, C, D; order does not matter. Multiple sections can be chained with spaces.]";
 #pragma warning restore 414
 
