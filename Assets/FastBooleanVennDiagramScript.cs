@@ -6,13 +6,13 @@ using UnityEngine;
 public class FastBooleanVennDiagramScript : MonoBehaviour {
 
     public KMAudio Audio;
-    public KMBombModule module;
     public List<KMSelectable> buttons;
     public Renderer[] brends;
     public Material[] mats;
     public Transform timer;
     public Renderer timerend;
     public TextMesh display;
+    public FakeStatusLight statusLight;
 
     private string[] venn = new string[16] { "O", "A", "B", "AB", "C", "AC", "BC", "ABC", "D", "AD", "BD", "ABD", "CD", "ACD", "BCD", "ABCD"};
     private bool[][] truth = new bool[2][] { new bool[16], new bool[16]};
@@ -94,6 +94,7 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
             truth[1][i] = false;
         }
         QuickLog("Press any sector to activate the module.");
+        statusLight.GetStatusLights(statusLight.transform);
     }
 
     private IEnumerator Sound(bool a, bool b, bool c, bool d)
@@ -223,7 +224,7 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
                 case 4: truth[0][i] = Op(Op(a[sets[0]], a[sets[1]], ops[0]), Op(a[sets[2]], a[sets[3]], ops[2]), ops[1]); break;
             }
         }
-        QuickLog("I expect the following sections to be pressed: {0}.", string.Join(", ", venn.Where((x, i) => truth[0][i]).ToArray()));
+        QuickLog("I expect the following sections to be submitted: {0}.", string.Join(", ", venn.Where((x, i) => truth[0][i]).ToArray()));
         var curMaxTime = TwitchPlaysActive ? timeAllowedTP : timeAllowedNormal;
         e = curMaxTime;
         while (e > 0)
@@ -237,17 +238,22 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
         for (int i = 0; i < 16; i++)
             brends[i].material = mats[(truth[1][i] ? 2 : 0) + (truth[0][i] ? 1 : 2)];
         QuickLog("Submitted{0}.", truth[1].All(x => !x) ? " nothing" : (": " + string.Join(", ", venn.Where((x, i) => truth[1][i]).ToArray())));
-        if(Enumerable.Range(0, 16).Select(x => truth[0][x] == truth[1][x]).All(x => x))
+        if(Enumerable.Range(0, 16).All(x => truth[0][x] == truth[1][x]))
         {
             moduleSolved = true;
             timerend.enabled = false;
             Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
-            module.HandlePass();
+            statusLight.HandlePass();
         }
         else
         {
             if (Enumerable.Range(0, 16).Any(x => truth[0][x] ^ truth[1][x]))
-                module.HandleStrike();
+            {
+                if (truth[1].Distinct().Count() != 1)
+                    statusLight.HandleStrike();
+                else if (statusLight != null)
+                    statusLight.FlashStrike();
+            }
             pressable = false;
             while(e < 15)
             {
@@ -269,7 +275,7 @@ public class FastBooleanVennDiagramScript : MonoBehaviour {
     }
 #pragma warning disable 414
     private bool TwitchPlaysActive;
-    private readonly string TwitchHelpMessage = @"!{0} activate [Activates the module.] | !{0} O/<ABCD> [Selects a section corresponding to A, B, C, D; order does not matter. Multiple sections can be chained with spaces.]";
+    private readonly string TwitchHelpMessage = @"!{0} activate [Activates the module.] | !{0} O/<ABCD> [Selects a sector corresponding to sections A, B, C, D; order does not matter. Multiple sectors can be chained with spaces.]";
 #pragma warning restore 414
 
     private IEnumerator ProcessTwitchCommand(string command)
